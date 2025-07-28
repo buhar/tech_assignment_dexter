@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shift_handover_repository/shift_handover_repository.dart';
 import 'package:shift_handover_challenge/features/shift_handover/view/note_card.dart';
 import 'package:shift_handover_challenge/features/shift_handover/bloc/shift_handover_bloc.dart';
-import 'package:shift_handover_challenge/features/shift_handover/models/shift_handover_models.dart';
 
 class ShiftHandoverScreen extends StatelessWidget {
   const ShiftHandoverScreen({Key? key}) : super(key: key);
@@ -10,7 +10,9 @@ class ShiftHandoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ShiftHandoverBloc()..add(const LoadShiftReport('current-user-id')),
+      create: (context) => ShiftHandoverBloc(
+        repository: context.read<ShiftHandoverRepository>(),
+      )..add(const LoadShiftReport('current-user-id')),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Shift Handover Report'),
