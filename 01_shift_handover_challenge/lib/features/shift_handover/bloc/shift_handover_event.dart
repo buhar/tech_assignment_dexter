@@ -1,23 +1,45 @@
 part of 'shift_handover_bloc.dart';
 
-abstract class ShiftHandoverEvent extends Equatable {
+sealed class ShiftHandoverEvent extends Equatable {
   const ShiftHandoverEvent();
-  @override
-  List<Object> get props => [];
 }
 
-class LoadShiftReport extends ShiftHandoverEvent {
+class LoadShiftReportRequested extends ShiftHandoverEvent {
   final String caregiverId;
-  const LoadShiftReport(this.caregiverId);
+  
+  const LoadShiftReportRequested({required this.caregiverId});
+
+  @override
+  List<Object> get props => [caregiverId];
 }
 
-class AddNewNote extends ShiftHandoverEvent {
+class AddNoteRequested extends ShiftHandoverEvent {
   final String text;
   final NoteType type;
-  const AddNewNote(this.text, this.type);
+  
+  const AddNoteRequested({
+    required this.text,
+    required this.type,
+  });
+
+  @override
+  List<Object> get props => [text, type];
 }
 
-class SubmitReport extends ShiftHandoverEvent {
+class SubmitReportRequested extends ShiftHandoverEvent {
   final String summary;
-  const SubmitReport(this.summary);
+  
+  const SubmitReportRequested({required this.summary});
+
+  @override
+  List<Object> get props => [summary];
+}
+
+class RefreshReportRequested extends ShiftHandoverEvent {
+  final String caregiverId;
+  
+  const RefreshReportRequested({required this.caregiverId});
+
+  @override
+  List<Object> get props => [caregiverId];
 }

@@ -12,7 +12,7 @@ class ShiftHandoverScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => ShiftHandoverBloc(
         repository: context.read<ShiftHandoverRepository>(),
-      )..add(const LoadShiftReport('current-user-id')),
+      )..add(const LoadShiftReportRequested(caregiverId: 'current-user-id')),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Shift Handover Report'),
@@ -20,12 +20,12 @@ class ShiftHandoverScreen extends StatelessWidget {
           actions: [
             BlocBuilder<ShiftHandoverBloc, ShiftHandoverState>(
               builder: (context, state) {
-                if (state.isLoading && state.report == null) return const SizedBox.shrink();
+                if (state is ShiftHandoverLoading && state.report == null) return const SizedBox.shrink();
                 return IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: 'Refresh Report',
                   onPressed: () {
-                    context.read<ShiftHandoverBloc>().add(const LoadShiftReport('current-user-id'));
+                    context.read<ShiftHandoverBloc>().add(const RefreshReportRequested(caregiverId: 'current-user-id'));
                   },
                 );
               },
@@ -34,15 +34,15 @@ class ShiftHandoverScreen extends StatelessWidget {
         ),
         body: BlocConsumer<ShiftHandoverBloc, ShiftHandoverState>(
           listener: (context, state) {
-            if (state.error != null) {
+            if (state is ShiftHandoverError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('An error occurred: ${state.error}'),
+                  content: Text('An error occurred: ${state.message}'),
                   backgroundColor: Theme.of(context).colorScheme.error,
                 ),
               );
             }
-            if (state.report?.isSubmitted ?? false) {
+            if (state is ShiftHandoverSuccess && state.type == SuccessType.reportSubmitted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Report submitted successfully!'),
@@ -52,64 +52,70 @@ class ShiftHandoverScreen extends StatelessWidget {
             }
           },
           builder: (context, state) {
-            if (state.isLoading && state.report == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state.report == null) {
-              return Center(
+            return switch(state) {
+              ShiftHandoverInitial() => const Center(child: CircularProgressIndicator()),
+              ShiftHandoverLoading(report: null) => const Center(child: CircularProgressIndicator()),
+              ShiftHandoverLoading(:final report?) => _buildReportView(report, context, state),
+              ShiftHandoverSuccess(:final report) => _buildReportView(report, context, state),
+              ShiftHandoverError(report: null, :final message) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Failed to load shift report.', style: TextStyle(fontSize: 16)),
+                    Text('Failed to load shift report: $message', 
+                         style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh),
                       label: const Text('Try Again'),
                       onPressed: () => context
                           .read<ShiftHandoverBloc>()
-                          .add(const LoadShiftReport('current-user-id')),
+                          .add(const LoadShiftReportRequested(caregiverId: 'current-user-id')),
                     )
                   ],
                 ),
-              );
-            }
-
-            final report = state.report!;
-
-            return Column(
-              children: [
-                if (report.notes.isEmpty)
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        'No notes added yet.\nUse the form below to add the first note.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.grey[600]),
-                      ),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: report.notes.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        return NoteCard(note: report.notes[index]);
-                      },
-                    ),
-                  ),
-                _buildInputSection(context, state),
-              ],
-            );
+              ),
+              ShiftHandoverError(:final report?) => _buildReportView(report, context, state),
+            };
           },
         ),
       ),
     );
+  }
+
+  Widget _buildReportView(ShiftReport report, BuildContext context, ShiftHandoverState state) {
+    return Column(
+      children: [
+        if (report.notes.isEmpty)
+          Expanded(
+            child: Center(
+              child: Text(
+                'No notes added yet.\nUse the form below to add the first note.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.grey[600]),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: report.notes.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return NoteCard(note: report.notes[index]);
+              },
+            ),
+          ),
+        _buildInputSection(context, state),
+      ],
+    );
+  }
+
+  bool _isSubmitting(ShiftHandoverState state) {
+    return state is ShiftHandoverLoading && state.type == LoadingType.submittingReport;
   }
 
   Widget _buildInputSection(BuildContext context, ShiftHandoverState state) {
@@ -134,7 +140,7 @@ class ShiftHandoverScreen extends StatelessWidget {
                     ),
                     onSubmitted: (value) {
                       if (value.isNotEmpty) {
-                        context.read<ShiftHandoverBloc>().add(AddNewNote(value, selectedType));
+                        context.read<ShiftHandoverBloc>().add(AddNoteRequested(text: value, type: selectedType));
                         textController.clear();
                       }
                     },
@@ -173,16 +179,16 @@ class ShiftHandoverScreen extends StatelessWidget {
             }),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              icon: state.isSubmitting ? const SizedBox.shrink() : const Icon(Icons.send),
+              icon: _isSubmitting(state) ? const SizedBox.shrink() : const Icon(Icons.send),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
               ),
-              onPressed: state.isSubmitting
+              onPressed: _isSubmitting(state)
                   ? null
                   : () {
                       _showSubmitDialog(context);
                     },
-              label: state.isSubmitting
+              label: _isSubmitting(state)
                   ? const SizedBox(
                       height: 24,
                       width: 24,
@@ -213,7 +219,7 @@ class ShiftHandoverScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              context.read<ShiftHandoverBloc>().add(SubmitReport(summaryController.text));
+              context.read<ShiftHandoverBloc>().add(SubmitReportRequested(summary: summaryController.text));
               Navigator.pop(dialogContext);
             },
             child: const Text('Submit'),

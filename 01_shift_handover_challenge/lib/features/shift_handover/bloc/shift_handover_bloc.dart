@@ -12,35 +12,44 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
   ShiftHandoverBloc({
     required ShiftHandoverRepository repository,
   }) : _repository = repository,
-       super(const ShiftHandoverState()) {
-    on<LoadShiftReport>(_onLoadShiftReport);
-    on<AddNewNote>(_onAddNewNote);
-    on<SubmitReport>(_onSubmitReport);
+       super(const ShiftHandoverInitial()) {
+    on<LoadShiftReportRequested>(_onLoadShiftReportRequested);
+    on<AddNoteRequested>(_onAddNoteRequested);
+    on<SubmitReportRequested>(_onSubmitReportRequested);
+    on<RefreshReportRequested>(_onRefreshReportRequested);
   }
 
-  Future<void> _onLoadShiftReport(
-    LoadShiftReport event,
+  Future<void> _onLoadShiftReportRequested(
+    LoadShiftReportRequested event,
     Emitter<ShiftHandoverState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(const ShiftHandoverLoading(type: LoadingType.loadingReport));
     try {
       final report = await _repository.getShiftReport(event.caregiverId);
-      emit(state.copyWith(report: report, isLoading: false));
+      emit(ShiftHandoverSuccess(
+        report: report,
+        type: SuccessType.reportLoaded,
+      ));
     } catch (e) {
-      emit(state.copyWith(
-        error: e is ShiftHandoverException ? e.message : e.toString(), 
-        isLoading: false,
+      final exception = e is ShiftHandoverException ? e : null;
+      emit(ShiftHandoverError(
+        message: exception?.message ?? e.toString(),
+        exception: exception,
       ));
     }
   }
 
-  Future<void> _onAddNewNote(
-    AddNewNote event,
+  Future<void> _onAddNoteRequested(
+    AddNoteRequested event,
     Emitter<ShiftHandoverState> emit,
   ) async {
-    if (state.report == null) return;
+    final currentState = state;
+    if (currentState is! ShiftHandoverSuccess) return;
 
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(ShiftHandoverLoading(
+      report: currentState.report,
+      type: LoadingType.addingNote,
+    ));
     
     try {
       final newNote = HandoverNote(
@@ -48,43 +57,86 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
         text: event.text,
         type: event.type,
         timestamp: DateTime.now(),
-        authorId: state.report!.caregiverId,
+        authorId: currentState.report.caregiverId,
       );
 
-      await _repository.addNote(state.report!.id, newNote);
+      await _repository.addNote(currentState.report.id, newNote);
       
-      final updatedNotes = List<HandoverNote>.from(state.report!.notes)..add(newNote);
-      final updatedReport = state.report!.copyWith(notes: updatedNotes);
+      final updatedNotes = List<HandoverNote>.from(currentState.report.notes)..add(newNote);
+      final updatedReport = currentState.report.copyWith(notes: updatedNotes);
       
-      emit(state.copyWith(report: updatedReport, isLoading: false));
+      emit(ShiftHandoverSuccess(
+        report: updatedReport,
+        type: SuccessType.noteAdded,
+      ));
     } catch (e) {
-      emit(state.copyWith(
-        error: e is ShiftHandoverException ? e.message : e.toString(),
-        isLoading: false,
+      final exception = e is ShiftHandoverException ? e : null;
+      emit(ShiftHandoverError(
+        message: exception?.message ?? e.toString(),
+        report: currentState.report,
+        exception: exception,
       ));
     }
   }
 
-  Future<void> _onSubmitReport(
-    SubmitReport event,
+  Future<void> _onSubmitReportRequested(
+    SubmitReportRequested event,
     Emitter<ShiftHandoverState> emit,
   ) async {
-    if (state.report == null) return;
+    final currentState = state;
+    if (currentState is! ShiftHandoverSuccess) return;
 
-    emit(state.copyWith(isSubmitting: true, clearError: true));
+    emit(ShiftHandoverLoading(
+      report: currentState.report,
+      type: LoadingType.submittingReport,
+    ));
+    
     try {
-      final updatedReport = state.report!.copyWith(
+      final updatedReport = currentState.report.copyWith(
         summary: event.summary,
         endTime: DateTime.now(),
         isSubmitted: true,
       );
 
       final submittedReport = await _repository.submitReport(updatedReport);
-      emit(state.copyWith(report: submittedReport, isSubmitting: false));
+      emit(ShiftHandoverSuccess(
+        report: submittedReport,
+        type: SuccessType.reportSubmitted,
+      ));
     } catch (e) {
-      emit(state.copyWith(
-        error: e is ShiftHandoverException ? e.message : e.toString(),
-        isSubmitting: false,
+      final exception = e is ShiftHandoverException ? e : null;
+      emit(ShiftHandoverError(
+        message: exception?.message ?? e.toString(),
+        report: currentState.report,
+        exception: exception,
+      ));
+    }
+  }
+
+  Future<void> _onRefreshReportRequested(
+    RefreshReportRequested event,
+    Emitter<ShiftHandoverState> emit,
+  ) async {
+    final currentState = state;
+    final currentReport = currentState is ShiftHandoverSuccess ? currentState.report : null;
+    
+    emit(ShiftHandoverLoading(
+      report: currentReport,
+      type: LoadingType.loadingReport,
+    ));
+    
+    try {
+      final report = await _repository.getShiftReport(event.caregiverId);
+      emit(ShiftHandoverSuccess(
+        report: report,
+        type: SuccessType.reportLoaded,
+      ));
+    } catch (e) {
+      final exception = e is ShiftHandoverException ? e : null;
+      emit(ShiftHandoverError(
+        message: exception?.message ?? e.toString(),
+        report: currentReport,
+        exception: exception,
       ));
     }
   }
