@@ -96,11 +96,7 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
     );
 
     final updatedNotes = List<HandoverNote>.from(state.report!.notes)..add(newNote);
-    final updatedReport = ShiftReport(
-        id: state.report!.id,
-        caregiverId: state.report!.caregiverId,
-        startTime: state.report!.startTime,
-        notes: updatedNotes);
+    final updatedReport = state.report!.copyWith(notes: updatedNotes);
 
     if (Random().nextDouble() > 0.2) {
       emit(state.copyWith(report: updatedReport));
@@ -117,8 +113,11 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
 
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
-      final updatedReport = state.report!;
-      updatedReport.submitReport(event.summary);
+      final updatedReport = state.report!.copyWith(
+        summary: event.summary,
+        endTime: DateTime.now(),
+        isSubmitted: true,
+      );
 
       final success = await _service.submitShiftReport(updatedReport);
       
