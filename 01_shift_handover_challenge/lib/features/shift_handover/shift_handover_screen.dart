@@ -64,7 +64,9 @@ class ShiftHandoverScreen extends StatelessWidget {
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh),
                       label: const Text('Try Again'),
-                      onPressed: () => context.read<ShiftHandoverBloc>().add(const LoadShiftReport('current-user-id')),
+                      onPressed: () => context
+                          .read<ShiftHandoverBloc>()
+                          .add(const LoadShiftReport('current-user-id')),
                     )
                   ],
                 ),
@@ -81,7 +83,10 @@ class ShiftHandoverScreen extends StatelessWidget {
                       child: Text(
                         'No notes added yet.\nUse the form below to add the first note.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.grey[600]),
                       ),
                     ),
                   )
