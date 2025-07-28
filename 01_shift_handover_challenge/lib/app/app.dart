@@ -10,11 +10,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (context) => ShiftHandoverRepositoryImpl(
-        apiClient: ShiftHandoverApiClient(),
-        storage: InMemoryShiftHandoverStorage(),
-      ),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<ShiftHandoverApiClient>(
+          create: (context) => ShiftHandoverApiClient(),
+        ),
+        RepositoryProvider<InMemoryShiftHandoverStorage>(
+          create: (context) => InMemoryShiftHandoverStorage(),
+        ),
+        RepositoryProvider<ShiftHandoverRepository>(
+          create: (context) => ShiftHandoverRepositoryImpl(
+            apiClient: context.read<ShiftHandoverApiClient>(),
+            storage: context.read<InMemoryShiftHandoverStorage>(),
+          ),
+        ),
+      ],
       child: MaterialApp(
         title: 'Shift Handover',
         debugShowCheckedModeBanner: false,
