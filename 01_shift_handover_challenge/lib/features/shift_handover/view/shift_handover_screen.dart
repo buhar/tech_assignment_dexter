@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shift_handover_challenge/features/shift_handover/models/note_card.dart';
+import 'package:shift_handover_challenge/features/shift_handover/view/note_card.dart';
 import 'package:shift_handover_challenge/features/shift_handover/bloc/shift_handover_bloc.dart';
 import 'package:shift_handover_challenge/features/shift_handover/models/shift_handover_models.dart';
 
