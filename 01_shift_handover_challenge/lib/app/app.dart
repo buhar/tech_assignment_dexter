@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shift_handover_challenge/app/theme/theme.dart';
-import 'package:shift_handover_challenge/features/shift_handover/shift_handover_screen.dart';
+import 'package:shift_handover_challenge/features/shift_handover/view/shift_handover_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

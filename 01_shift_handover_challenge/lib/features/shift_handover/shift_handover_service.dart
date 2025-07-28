@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'shift_handover_models.dart';
+import 'models/shift_handover_models.dart';
 
 class ShiftHandoverService {
   Future<ShiftReport> getShiftReport(String caregiverId) async {

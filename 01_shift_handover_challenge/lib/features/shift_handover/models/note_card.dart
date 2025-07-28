@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shift_handover_challenge/features/shift_handover/shift_handover_models.dart';
+import 'package:shift_handover_challenge/features/shift_handover/models/shift_handover_models.dart';
 
 class NoteCard extends StatelessWidget {
   final HandoverNote note;

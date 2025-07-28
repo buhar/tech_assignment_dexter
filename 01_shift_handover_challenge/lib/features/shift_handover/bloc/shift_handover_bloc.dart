@@ -2,8 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'dart:math';
 
-import 'shift_handover_models.dart';
-import 'shift_handover_service.dart';
+import '../models/shift_handover_models.dart';
+import '../shift_handover_service.dart';
 
 abstract class ShiftHandoverEvent extends Equatable {
   const ShiftHandoverEvent();
