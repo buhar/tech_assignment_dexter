@@ -19,6 +19,8 @@ dev_dependencies:
     sdk: flutter
   build_runner: ^2.4.8
   json_serializable: ^6.7.1
+  bloc_test: ^9.1.5
+  mocktail: ^1.0.2
 
   flutter_lints: ^2.0.0
 
