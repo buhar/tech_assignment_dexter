@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shift_handover_repository/shift_handover_repository.dart';
 import 'package:shift_handover_challenge/features/shift_handover/bloc/shift_handover_bloc.dart';
+import 'package:shift_handover_repository/shift_handover_repository.dart';
+
 import 'submit_dialog.dart';
 
 class InputSection extends StatefulWidget {
@@ -27,8 +28,13 @@ class _InputSectionState extends State<InputSection> {
   }
 
   bool get _isSubmitting {
-    return widget.state is ShiftHandoverLoading && 
-           (widget.state as ShiftHandoverLoading).type == LoadingType.submittingReport;
+    return widget.state is ShiftHandoverLoading &&
+        (widget.state as ShiftHandoverLoading).type == LoadingType.submittingReport;
+  }
+
+  bool get _isAddingNote {
+    return widget.state is ShiftHandoverLoading &&
+        (widget.state as ShiftHandoverLoading).type == LoadingType.addingNote;
   }
 
   @override
@@ -43,14 +49,32 @@ class _InputSectionState extends State<InputSection> {
           children: [
             TextField(
               controller: _textController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Add a new note for the next shift...',
+                suffixIcon: IconButton(
+                  icon: _isAddingNote 
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  onPressed: _isAddingNote ? null : () {
+                    final text = _textController.text.trim();
+                    if (text.isNotEmpty) {
+                      context
+                          .read<ShiftHandoverBloc>()
+                          .add(AddNoteRequested(text: text, type: _selectedType));
+                      _textController.clear();
+                    }
+                  },
+                ),
               ),
               onSubmitted: (value) {
                 if (value.isNotEmpty) {
-                  context.read<ShiftHandoverBloc>().add(
-                    AddNoteRequested(text: value, type: _selectedType)
-                  );
+                  context
+                      .read<ShiftHandoverBloc>()
+                      .add(AddNoteRequested(text: value, type: _selectedType));
                   _textController.clear();
                 }
               },
@@ -151,4 +175,4 @@ class SubmitButton extends StatelessWidget {
           : const Text('Submit Final Report'),
     );
   }
-} 
+}
