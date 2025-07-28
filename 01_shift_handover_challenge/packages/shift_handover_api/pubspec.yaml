@@ -1,0 +1,15 @@
+name: shift_handover_api
+description: API layer for shift handover functionality
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.2.3 <4.0.0"
+
+dependencies:
+  equatable: ^2.0.5
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.8

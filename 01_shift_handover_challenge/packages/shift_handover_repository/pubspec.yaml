@@ -1,0 +1,16 @@
+name: shift_handover_repository
+description: Repository layer for shift handover functionality
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.2.3 <4.0.0"
+
+dependencies:
+  equatable: ^2.0.5
+  shift_handover_api:
+    path: ../shift_handover_api
+
+dev_dependencies:
+  test: ^1.24.0
+  mocktail: ^1.0.2
